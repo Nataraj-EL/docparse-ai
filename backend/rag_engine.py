@@ -73,58 +73,70 @@ def process_pdf(pdf_path: str, session_id: str) -> bool:
             return True 
 
         # Batch processing for embeddings and ChromaDB storage
-        # Reduced batch size to 32 for better performance on Railway CPU tiers
-        batch_size = 32
-        for i in range(0, len(chunks), batch_size):
-            batch_chunks = chunks[i:i + batch_size]
-            
-            # EMBEDDING STRATEGY:
-            try:
-                # feature_extraction returns a list of arrays
-                if hf_client:
-                    print(f"[DEBUG] Attempting HF API Embedding for batch {i//batch_size + 1}...")
-                    api_embeddings = hf_client.feature_extraction(batch_chunks, model="sentence-transformers/all-MiniLM-L6-v2")
-                    
-                    # Ensure it's a list of lists/arrays. API might return different formats.
-                    if isinstance(api_embeddings, list) or (hasattr(api_embeddings, 'shape') and len(api_embeddings.shape) > 0):
-                       batch_embeddings = api_embeddings
-                       print(f"[SUCCESS] Used HF API for batch {i//batch_size + 1}")
-                    else:
-                       print(f"[ERROR] Invalid API response format: {type(api_embeddings)}")
-                       raise ValueError("Invalid API response format")
-                else:
-                    print("[WARNING] No HF Client available (Check HUGGINGFACE_API_KEY)")
-                    raise ValueError("No HF Client available")
-            except Exception as e:
-                print(f"[WARNING] HF API Embedding failed: {e}. Falling back to Local CPU.")
-                # Fallback to Local CPU
-                print(f"[INFO] Using Local CPU Embedding for batch {i//batch_size + 1}...")
-                try:
-                    batch_embeddings = get_embedding_model().encode(batch_chunks)
-                except Exception as ex:
-                    print(f"[ERROR] Local embedding failed: {ex}")
-                    raise ex
-            try:
-                batch_embeddings = get_embedding_model().encode(batch_chunks)
-            except Exception as e:
-                print(f"[ERROR] Local embedding failed: {e}")
-                raise e
-            
-            # Generate unique IDs for each chunk
-            base_id = f"{filename}_{os.path.getmtime(pdf_path)}"
-            batch_ids = [f"{base_id}_chunk_{i+j}" for j in range(len(batch_chunks))]
-            
-            # Add session_id to metadata for EVERY chunk
-            batch_metadatas = [{"session_id": session_id, "source": filename} for _ in batch_chunks]
-            
-            get_collection().add(
-                documents=batch_chunks, 
-                embeddings=[emb.tolist() if hasattr(emb, 'tolist') else emb for emb in batch_embeddings],
-                ids=batch_ids,
-                metadatas=batch_metadatas
-            )
-            print(f"[DEBUG] Processed batch {i//batch_size + 1}/{(len(chunks)-1)//batch_size + 1}")
+        # Increased batch size to 128 to reduce API overhead
+        batch_size = 128
+        total_batches = (len(chunks) - 1) // batch_size + 1
         
+        t_start_embed = time.time()
+        
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        
+        def process_batch(batch_idx, batch_chunks):
+            t_batch_start = time.time()
+            try:
+                # API Strategy
+                if hf_client:
+                    print(f"[DEBUG] Batch {batch_idx}: Requesting HF API...")
+                    api_embeddings = hf_client.feature_extraction(batch_chunks, model="sentence-transformers/all-MiniLM-L6-v2")
+                    if isinstance(api_embeddings, list) or (hasattr(api_embeddings, 'shape') and len(api_embeddings.shape) > 0):
+                       print(f"[SUCCESS] Batch {batch_idx}: HF API Success ({time.time() - t_batch_start:.2f}s)")
+                       return batch_chunks, api_embeddings
+            except Exception as e:
+                print(f"[WARNING] Batch {batch_idx}: HF API Failed ({e}). Falling back to local.")
+            
+            # Local Strategy (Fallback)
+            try:
+                print(f"[INFO] Batch {batch_idx}: Computing Local Embedding...")
+                local_embeddings = get_embedding_model().encode(batch_chunks)
+                return batch_chunks, local_embeddings
+            except Exception as e:
+                print(f"[ERROR] Batch {batch_idx}: ALL Failed. {e}")
+                raise e
+
+        # Process batches in parallel
+        # Limit max_workers to 4 to avoid hitting HF rate limits too aggressively
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = []
+            for i in range(0, len(chunks), batch_size):
+                batch_chunks = chunks[i:i + batch_size]
+                batch_idx = i // batch_size + 1
+                futures.append(executor.submit(process_batch, batch_idx, batch_chunks))
+            
+            for future in as_completed(futures):
+                batch_chunks, embeddings = future.result()
+                
+                # Generate unique IDs and Metadata
+                # We need to recalculate indices or use consistent naming
+                # Simpler: just use hash or uuid if order doesn't strictly matter for retrieval ID, 
+                # but for consistency let's rely on content hash + timestamp if possible, 
+                # OR just simple iteration if we knew the global index. 
+                # Re-calculating global index in parallel is tricky, so let's stick to unique ID generation here.
+                
+                # Update: IDs need to be unique. 
+                # Let's generate IDs based on content hash + index within batch to be safe
+                ts = str(time.time())
+                batch_ids = [f"{filename}_{ts}_{hash(c)}" for c in batch_chunks]
+                batch_metadatas = [{"session_id": session_id, "source": filename} for _ in batch_chunks]
+                
+                get_collection().add(
+                    documents=batch_chunks, 
+                    embeddings=[emb.tolist() if hasattr(emb, 'tolist') else emb for emb in embeddings],
+                    ids=batch_ids,
+                    metadatas=batch_metadatas
+                )
+        
+        t_end_embed = time.time()
+        print(f"[PERF] Total embedding process took {t_end_embed - t_start_embed:.2f}s")
         print(f"[DEBUG] PDF processing complete for {filename}.")
         return True
         
