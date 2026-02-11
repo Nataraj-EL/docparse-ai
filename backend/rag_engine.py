@@ -8,9 +8,25 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-chroma_client = PersistentClient(path="chroma_db")
-collection = chroma_client.get_or_create_collection("pdf_collection")
+# Lazy loading globals
+_embedding_model = None
+_chroma_client = None
+_collection = None
+
+def get_embedding_model():
+    global _embedding_model
+    if _embedding_model is None:
+        print("[INFO] Loading SentenceTransformer model...")
+        _embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+    return _embedding_model
+
+def get_collection():
+    global _chroma_client, _collection
+    if _collection is None:
+        print("[INFO] Connecting to ChromaDB...")
+        _chroma_client = PersistentClient(path="chroma_db")
+        _collection = _chroma_client.get_or_create_collection("pdf_collection")
+    return _collection
 
 def process_pdf(pdf_path: str, session_id: str) -> bool:
     """Process a PDF file and store its chunks in ChromaDB with session isolation."""
@@ -77,7 +93,12 @@ def process_pdf(pdf_path: str, session_id: str) -> bool:
                    raise ValueError("Invalid API response format")
             except Exception as e:
                 print(f"[WARNING] HF API Embedding failed: {e}. Falling back to Local CPU.")
-                batch_embeddings = embedding_model.encode(batch_chunks)
+            # Fallback to Local CPU
+            try:
+                batch_embeddings = get_embedding_model().encode(batch_chunks)
+            except Exception as e:
+                print(f"[ERROR] Local embedding failed: {e}")
+                raise e
             
             # Generate unique IDs for each chunk
             base_id = f"{filename}_{os.path.getmtime(pdf_path)}"
@@ -86,7 +107,7 @@ def process_pdf(pdf_path: str, session_id: str) -> bool:
             # Add session_id to metadata for EVERY chunk
             batch_metadatas = [{"session_id": session_id, "source": filename} for _ in batch_chunks]
             
-            collection.add(
+            get_collection().add(
                 documents=batch_chunks, 
                 embeddings=[emb.tolist() if hasattr(emb, 'tolist') else emb for emb in batch_embeddings],
                 ids=batch_ids,
@@ -107,7 +128,7 @@ def list_documents(session_id: str) -> List[Dict[str, Any]]:
     """List all unique documents stored in ChromaDB for a specific session."""
     try:
         # Get all IDs and metadatas, filtered by session_id
-        results = collection.get(
+        results = get_collection().get(
             where={"session_id": session_id},
             include=["metadatas"]
         )
@@ -134,7 +155,7 @@ def delete_document(filename: str, session_id: str) -> bool:
     """Delete all chunks associated with a specific filename and session."""
     try:
         # Get all IDs to find matches ensuring they belong to the session
-        results = collection.get(
+        results = get_collection().get(
             where={"session_id": session_id}
         )
         if not results or not results["ids"]:
@@ -143,7 +164,7 @@ def delete_document(filename: str, session_id: str) -> bool:
         ids_to_delete = [doc_id for doc_id in results["ids"] if doc_id.startswith(filename + "_chunk_") or doc_id == filename]
         
         if ids_to_delete:
-            collection.delete(ids=ids_to_delete)
+            get_collection().delete(ids=ids_to_delete)
             print(f"[DEBUG] Deleted {len(ids_to_delete)} chunks for {filename}.")
             return True
         return False
@@ -214,10 +235,10 @@ def ask_query(query: str, session_id: str) -> str:
     """
     try:
         # Encode the query to get embeddings
-        query_embedding = embedding_model.encode([query])[0]
+        query_embedding = get_embedding_model().encode([query])[0]
         
         # Query ChromaDB for relevant context, filtered by session_id
-        results = collection.query(
+        results = get_collection().query(
             query_embeddings=[query_embedding.tolist()],
             n_results=5,
             where={"session_id": session_id},
