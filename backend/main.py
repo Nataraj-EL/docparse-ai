@@ -199,6 +199,11 @@ async def remove_document(filename: str, x_session_id: str = Header(...)):
             detail=f"Document {filename} not found or could not be deleted"
         )
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for the frontend."""
+    return {"status": "online", "model": "llama-3.3-70b-versatile"}
+
 @app.get("/test-groq")
 async def test_groq():
     """Test endpoint to verify Groq API connectivity."""
