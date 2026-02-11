@@ -340,9 +340,9 @@ export default function Home() {
                 <div className="w-24 h-24 mb-6 bg-blue-500/10 dark:bg-blue-500/5 rounded-3xl flex items-center justify-center border border-blue-500/20">
                   <span className="text-4xl">🎓</span>
                 </div>
-                <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">Academic Intelligence</h2>
+                <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">Universal Document Intelligence</h2>
                 <p className="text-sm md:text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed px-4">
-                  Upload your research papers, notes, or lectures. I'll provide structured, exam-ready insights with professional clarity.
+                  Upload research papers, novels, books, or contracts. I'll provide structured insights, summaries, and answers with professional clarity.
                 </p>
                 <label
                   htmlFor="file-upload"
