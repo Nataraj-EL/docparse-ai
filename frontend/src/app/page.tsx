@@ -181,18 +181,6 @@ export default function Home() {
     }
   };
 
-  // Render loading state while checking backend status
-  if (backendStatus === 'checking') {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Checking backend status...</p>
-        </div>
-      </div>
-    );
-  }
-
   // Render error state if backend is offline
   if (backendStatus === 'offline') {
     return (
@@ -297,7 +285,7 @@ export default function Home() {
                   ☰
                 </button>
                 <div className="min-w-0 flex-1 pr-4 cursor-default">
-                  <h1 className="text-xl md:text-2xl font-black italic uppercase tracking-normal bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 bg-clip-text text-transparent truncate pr-2">DocuMind AI</h1>
+                  <h1 className="text-xl md:text-2xl font-black italic uppercase tracking-normal bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 bg-clip-text text-transparent truncate pr-2">DocParse AI</h1>
                   <div className="flex items-center gap-2">
                     <span className={`h-1.5 w-1.5 rounded-full animate-pulse ${backendStatus === 'online' ? 'bg-green-400' : 'bg-red-400'}`}></span>
                     <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 font-sans truncate">{backendStatus === 'online' ? 'Llama 3 Active' : 'Offline'}</span>
