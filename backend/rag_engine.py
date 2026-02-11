@@ -186,8 +186,8 @@ def query_huggingface(prompt: str, system_prompt: str = None) -> str:
             messages=messages,
             model="meta-llama/Meta-Llama-3-8B-Instruct",
             max_tokens=1024,
-            temperature=0.7,
-            top_p=0.9,
+            temperature=0.3,
+            top_p=0.85,
             frequency_penalty=1.1,
             presence_penalty=1.0
         )
@@ -263,7 +263,8 @@ CORE DIRECTIVES:
 1. IDENTITY: You are a helpful, harmless, and honest academic assistant.
 2. STRICT DEDUPLICATION: Do NOT repeat the same fact or phrase. Synthesize info.
 3. CITATIONS: Attribute every claim using [Source: filename.pdf].
-4. MATH: Render all technical formulas in LaTeX: `$math$` for inline, `$$math$$` for blocks.
+4. MATH: Use standard LaTeX for formulas. Inline: `$E=mc^2$`. Block: `$$E=mc^2$$`. Do NOT use "mathmath" or other prefixes.
+5. NO FILLER: Start directly with the answer. Do not say "Here is the summary" or "Based on the document".
 
 ====================
 MULTILINGUAL INTELLIGENCE (CRITICAL):
