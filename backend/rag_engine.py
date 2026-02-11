@@ -104,6 +104,11 @@ def process_pdf(pdf_path: str, session_id: str) -> bool:
                 print(f"[ERROR] Batch {batch_idx}: ALL Failed. {e}")
                 raise e
 
+        
+        # Auto-cleanup: Remove existing chunks for this file to prevent duplicates/versioning issues
+        delete_document(filename, session_id)
+
+        import uuid
         # Process batches in parallel
         # Limit max_workers to 4 to avoid hitting HF rate limits too aggressively
         with ThreadPoolExecutor(max_workers=4) as executor:
@@ -117,16 +122,9 @@ def process_pdf(pdf_path: str, session_id: str) -> bool:
                 batch_chunks, embeddings = future.result()
                 
                 # Generate unique IDs and Metadata
-                # We need to recalculate indices or use consistent naming
-                # Simpler: just use hash or uuid if order doesn't strictly matter for retrieval ID, 
-                # but for consistency let's rely on content hash + timestamp if possible, 
-                # OR just simple iteration if we knew the global index. 
-                # Re-calculating global index in parallel is tricky, so let's stick to unique ID generation here.
-                
-                # Update: IDs need to be unique. 
-                # Let's generate IDs based on content hash + index within batch to be safe
-                ts = str(time.time())
-                batch_ids = [f"{filename}_{ts}_{hash(c)}" for c in batch_chunks]
+                # Use _chunk_ separator which is critical for list_documents to group files correctly
+                # We use UUID to ensure global uniqueness for every chunk
+                batch_ids = [f"{filename}_chunk_{uuid.uuid4()}" for _ in batch_chunks]
                 batch_metadatas = [{"session_id": session_id, "source": filename} for _ in batch_chunks]
                 
                 get_collection().add(
