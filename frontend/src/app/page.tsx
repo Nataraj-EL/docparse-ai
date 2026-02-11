@@ -147,7 +147,10 @@ export default function Home() {
           let errorMessage = 'Failed to upload files';
           try {
             const errorJson = JSON.parse(text);
-            errorMessage = errorJson.detail || errorJson.message || errorMessage;
+            const rawError = errorJson.detail || errorJson.message;
+            errorMessage = typeof rawError === 'object'
+              ? JSON.stringify(rawError)
+              : String(rawError || errorMessage);
           } catch (e) {
             // If not JSON, use the raw text or status
             errorMessage = `Server Error (${response.status}): ${text.slice(0, 100)}...`;
