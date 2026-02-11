@@ -1,0 +1,22 @@
+# General
+.DS_Store
+*.log
+
+# Backend (Python)
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+backend/.env
+backend/chroma_db/
+backend/temp/
+
+# Frontend (Node.js)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.env*
+frontend/.vercel/
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
+frontend/coverage/
