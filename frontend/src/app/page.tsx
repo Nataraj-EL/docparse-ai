@@ -27,8 +27,8 @@ export default function Home() {
     scrollToBottom();
   }, [messages, loading]);
 
-  // Check backend health
-  const checkBackendHealth = async () => {
+  // Check backend health with retry mechanism
+  const checkBackendHealth = async (retries = 20, delay = 3000) => {
     try {
       const response = await fetch(`${API_CONFIG.baseURL}/health`, {
         method: 'GET',
@@ -37,11 +37,15 @@ export default function Home() {
       });
       if (response.ok) {
         setBackendStatus('online');
-      } else {
-        setBackendStatus('offline');
+        return;
       }
     } catch (error) {
-      console.error('Failed to connect to backend:', error);
+      // Sielntly fail during retries
+    }
+
+    if (retries > 0) {
+      setTimeout(() => checkBackendHealth(retries - 1, delay), delay);
+    } else {
       setBackendStatus('offline');
     }
   };
@@ -312,7 +316,7 @@ export default function Home() {
                   <h1 className="text-xl md:text-2xl font-black italic uppercase tracking-normal bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 bg-clip-text text-transparent truncate pr-2">DocParse AI</h1>
                   <div className="flex items-center gap-2">
                     <span className={`h-1.5 w-1.5 rounded-full animate-pulse ${backendStatus === 'online' ? 'bg-green-400' : 'bg-red-400'}`}></span>
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 font-sans truncate">{backendStatus === 'online' ? 'Llama 3 Active' : 'Offline'}</span>
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 font-sans truncate">{backendStatus === 'online' ? 'Groq Active' : 'Offline'}</span>
                   </div>
                 </div>
               </div>
