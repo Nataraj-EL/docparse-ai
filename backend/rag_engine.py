@@ -186,13 +186,20 @@ def delete_document(filename: str, session_id: str) -> bool:
 from groq import Groq
 from huggingface_hub import InferenceClient
 
-# Initialize clients
-# CRITICAL FIX: Strip newline characters that might be present in the env var
-groq_api_key = os.getenv("GROQ_API_KEY", "").strip()
-client = Groq(api_key=groq_api_key) if groq_api_key else None
+# Initialize clients with safety checks
+try:
+    groq_api_key = os.getenv("GROQ_API_KEY", "").strip()
+    client = Groq(api_key=groq_api_key) if groq_api_key else None
+except Exception as e:
+    print(f"[ERROR] Failed to initialize Groq client: {e}")
+    client = None
 
-hf_api_key = os.getenv("HUGGINGFACE_API_KEY", "").strip()
-hf_client = InferenceClient(token=hf_api_key) if hf_api_key else None
+try:
+    hf_api_key = os.getenv("HUGGINGFACE_API_KEY", "").strip()
+    hf_client = InferenceClient(token=hf_api_key) if hf_api_key else None
+except Exception as e:
+    print(f"[ERROR] Failed to initialize HF client: {e}")
+    hf_client = None
 
 def query_groq(prompt: str, system_prompt: str = None) -> str:
     """
