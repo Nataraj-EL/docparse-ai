@@ -330,7 +330,7 @@ export default function Home() {
                 </div>
                 <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">Universal Document Intelligence</h2>
                 <p className="text-sm md:text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed px-4">
-                  Upload research papers, novels, books, or contracts. I'll provide structured insights, summaries, and answers with professional clarity.
+                  Upload research papers, books, or Study materials. I'll provide structured insights, summaries, and answers with professional clarity.
                 </p>
                 <label
                   htmlFor="file-upload"

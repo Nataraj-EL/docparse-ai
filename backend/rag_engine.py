@@ -130,7 +130,8 @@ def delete_document(filename: str) -> bool:
 from huggingface_hub import InferenceClient
 
 # Initialize the client at module level
-client = InferenceClient(token=os.getenv("HUGGINGFACE_API_KEY"))
+# CRITICAL FIX: Strip newline characters that might be present in the env var
+client = InferenceClient(token=os.getenv("HUGGINGFACE_API_KEY", "").strip())
 
 def query_huggingface(prompt: str, system_prompt: str = None) -> str:
     """
@@ -227,7 +228,7 @@ def ask_query(query: str) -> str:
             context = "\n\n---\n\n".join(context_chunks)
         
         # Create the comprehensive system prompt based on user requirements
-        system_prompt = """You are DocuMind AI, an advanced academic research assistant.
+        system_prompt = """You are DocParse AI, an advanced academic research assistant.
 You must behave like a professional exam assistant and subject matter expert.
 
 ====================
