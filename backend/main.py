@@ -1,7 +1,7 @@
 from fastapi import FastAPI, UploadFile, Form, Request, HTTPException, status, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
-from rag_engine import process_pdf, ask_query, query_groq, list_documents, delete_document
+from rag_engine import process_pdf, ask_query, query_groq, list_documents, delete_document, delete_all_documents
 import os
 import time
 import json

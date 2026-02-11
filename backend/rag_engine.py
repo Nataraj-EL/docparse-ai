@@ -195,6 +195,25 @@ def delete_document(filename: str, session_id: str) -> bool:
         print(f"[ERROR] delete_document failed: {e}")
         return False
 
+def delete_all_documents(session_id: str) -> bool:
+    """Delete all documents for a specific session."""
+    try:
+        results = get_collection().get(
+            where={"session_id": session_id}
+        )
+        if not results or not results["ids"]:
+            return False
+            
+        ids_to_delete = results["ids"]
+        if ids_to_delete:
+            get_collection().delete(ids=ids_to_delete)
+            print(f"[DEBUG] Deleted all {len(ids_to_delete)} chunks for session {session_id}.")
+            return True
+        return False
+    except Exception as e:
+        print(f"[ERROR] delete_all_documents failed: {e}")
+        return False
+
 from groq import Groq
 from huggingface_hub import InferenceClient
 
