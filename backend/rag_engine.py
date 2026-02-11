@@ -79,12 +79,28 @@ def process_pdf(pdf_path: str, session_id: str) -> bool:
             batch_chunks = chunks[i:i + batch_size]
             
             # EMBEDDING STRATEGY:
-            # Use Local CPU (Reliable, no API key needed for embeddings)
+            # 1. Try Hugging Face API (Fast, runs on GPU, no CPU load)
+            # 2. Fallback to Local CPU (Reliable, but slow)
             try:
-                batch_embeddings = get_embedding_model().encode(batch_chunks)
+                # feature_extraction returns a list of arrays
+                if hf_client:
+                    api_embeddings = hf_client.feature_extraction(batch_chunks, model="sentence-transformers/all-MiniLM-L6-v2")
+                    # Ensure it's a list of lists/arrays. API might return different formats.
+                    if isinstance(api_embeddings, list) or (hasattr(api_embeddings, 'shape') and len(api_embeddings.shape) > 0):
+                       batch_embeddings = api_embeddings
+                       print(f"[DEBUG] Used HF API for batch {i//batch_size + 1}")
+                    else:
+                       raise ValueError("Invalid API response format")
+                else:
+                    raise ValueError("No HF Client available")
             except Exception as e:
-                print(f"[ERROR] Local embedding failed: {e}")
-                raise e
+                print(f"[WARNING] HF API Embedding failed: {e}. Falling back to Local CPU.")
+                # Fallback to Local CPU
+                try:
+                    batch_embeddings = get_embedding_model().encode(batch_chunks)
+                except Exception as ex:
+                    print(f"[ERROR] Local embedding failed: {ex}")
+                    raise ex
             try:
                 batch_embeddings = get_embedding_model().encode(batch_chunks)
             except Exception as e:
@@ -164,11 +180,15 @@ def delete_document(filename: str, session_id: str) -> bool:
         return False
 
 from groq import Groq
+from huggingface_hub import InferenceClient
 
-# Initialize the client at module level
+# Initialize clients
 # CRITICAL FIX: Strip newline characters that might be present in the env var
-api_key = os.getenv("GROQ_API_KEY", "").strip()
-client = Groq(api_key=api_key) if api_key else None
+groq_api_key = os.getenv("GROQ_API_KEY", "").strip()
+client = Groq(api_key=groq_api_key) if groq_api_key else None
+
+hf_api_key = os.getenv("HUGGINGFACE_API_KEY", "").strip()
+hf_client = InferenceClient(token=hf_api_key) if hf_api_key else None
 
 def query_groq(prompt: str, system_prompt: str = None) -> str:
     """
