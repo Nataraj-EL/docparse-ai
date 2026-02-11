@@ -106,7 +106,7 @@ export default function Home() {
         formData.append("files", file);
       });
 
-      const response = await fetch('/api/upload', {
+      const response = await fetch(`${API_CONFIG.baseURL}${API_CONFIG.endpoints.upload}`, {
         method: 'POST',
         body: formData,
       });
@@ -125,12 +125,6 @@ export default function Home() {
       }
 
       const result = await response.json();
-      // Alert is optionally good, but auto-upload usually implies silent success or toast.
-      // But let's keep it simple for now as per "intelligent assistant" feel.
-      // Maybe just clear files or keep them to show what is active.
-      // User says "Automatically ingest... (NO manual upload button)".
-      // Let's keep the files in state to show what's uploaded.
-      // alert(`Successfully uploaded ${filesToUpl      const result = await response.json();
       console.log(`Successfully uploaded ${filesToUpload.length} file(s)!`);
       alert(`✅ ${filesToUpload.length} File(s) successfully uploaded and processed!`);
       fetchDocuments(); // Refresh list after upload
@@ -158,7 +152,7 @@ export default function Home() {
       const formData = new FormData();
       formData.append("query", query);
 
-      const response = await fetch('/api/ask', {
+      const response = await fetch(`${API_CONFIG.baseURL}${API_CONFIG.endpoints.ask}`, {
         method: 'POST',
         body: formData,
       });
