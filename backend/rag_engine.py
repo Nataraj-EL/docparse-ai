@@ -98,8 +98,7 @@ def process_pdf(pdf_path: str, session_id: str) -> bool:
             except Exception as e:
                 print(f"[WARNING] HF API Embedding failed: {e}. Falling back to Local CPU.")
                 # Fallback to Local CPU
-                try:
-                    print(f"[INFO] Using Local CPU Embedding for batch {i//batch_size + 1}...")
+                print(f"[INFO] Using Local CPU Embedding for batch {i//batch_size + 1}...")
                 try:
                     batch_embeddings = get_embedding_model().encode(batch_chunks)
                 except Exception as ex:
