@@ -3,6 +3,7 @@ from chromadb import PersistentClient
 import fitz  # PyMuPDF
 import os
 import json
+import time
 from typing import List, Dict, Any
 from dotenv import load_dotenv
 
