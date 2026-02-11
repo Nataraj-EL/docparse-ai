@@ -61,16 +61,31 @@ def process_pdf(pdf_path: str) -> bool:
         batch_size = 32
         for i in range(0, len(chunks), batch_size):
             batch_chunks = chunks[i:i + batch_size]
-            batch_embeddings = embedding_model.encode(batch_chunks)
+            
+            # HYBRID EMBEDDING STRATEGY:
+            # 1. Try Hugging Face API (Fast, runs on GPU, no CPU load)
+            # 2. Fallback to Local CPU (Reliable, but slow)
+            try:
+                # feature_extraction returns a list of arrays
+                api_embeddings = client.feature_extraction(batch_chunks, model="sentence-transformers/all-MiniLM-L6-v2")
+                # Ensure it's a list of lists/arrays. API might return different formats.
+                # If valid, use it.
+                if isinstance(api_embeddings, list) or (hasattr(api_embeddings, 'shape') and len(api_embeddings.shape) > 0):
+                   batch_embeddings = api_embeddings
+                   print(f"[DEBUG] Used HF API for batch {i//batch_size + 1}")
+                else:
+                   raise ValueError("Invalid API response format")
+            except Exception as e:
+                print(f"[WARNING] HF API Embedding failed: {e}. Falling back to Local CPU.")
+                batch_embeddings = embedding_model.encode(batch_chunks)
             
             # Generate unique IDs for each chunk
-            # Using chunk index and file stats to ensure uniqueness
             base_id = f"{filename}_{os.path.getmtime(pdf_path)}"
             batch_ids = [f"{base_id}_chunk_{i+j}" for j in range(len(batch_chunks))]
             
             collection.add(
                 documents=batch_chunks, 
-                embeddings=[emb.tolist() for emb in batch_embeddings],
+                embeddings=[emb.tolist() if hasattr(emb, 'tolist') else emb for emb in batch_embeddings],
                 ids=batch_ids
             )
             print(f"[DEBUG] Processed batch {i//batch_size + 1}/{(len(chunks)-1)//batch_size + 1}")
