@@ -57,7 +57,8 @@ def process_pdf(pdf_path: str) -> bool:
             return True 
 
         # Batch processing for embeddings and ChromaDB storage
-        batch_size = 100
+        # Reduced batch size to 32 for better performance on Railway CPU tiers
+        batch_size = 32
         for i in range(0, len(chunks), batch_size):
             batch_chunks = chunks[i:i + batch_size]
             batch_embeddings = embedding_model.encode(batch_chunks)
