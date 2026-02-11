@@ -208,7 +208,7 @@ async def test_groq():
         return {
             "status": "success",
             "response": response,
-            "model": "llama3-8b-8192"
+            "model": "llama-3.3-70b-versatile"
         }
     except Exception as e:
         return {

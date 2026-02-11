@@ -236,7 +236,7 @@ def query_groq(prompt: str, system_prompt: str = None) -> str:
         # Make the API request using Groq
         response = client.chat.completions.create(
             messages=messages,
-            model="llama3-8b-8192",
+            model="llama-3.3-70b-versatile",
             temperature=0.3,
             max_tokens=1024,
             top_p=0.85,
