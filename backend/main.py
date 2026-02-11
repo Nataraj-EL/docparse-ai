@@ -73,12 +73,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 # CORS configuration
-origins = [
-    "http://localhost:3000",  # Next.js dev server
-    "http://127.0.0.1:3000",  # Alternative localhost
-    "http://localhost:8000",  # FastAPI dev server
-    "http://127.0.0.1:8000",  # Alternative FastAPI dev server
-]
+origins = ["*"]  # Allow all origins for production (Vercel -> Railway)
 
 # Add CORS middleware with explicit configuration
 app.add_middleware(
