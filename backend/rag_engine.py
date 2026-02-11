@@ -79,23 +79,27 @@ def process_pdf(pdf_path: str, session_id: str) -> bool:
             batch_chunks = chunks[i:i + batch_size]
             
             # EMBEDDING STRATEGY:
-            # 1. Try Hugging Face API (Fast, runs on GPU, no CPU load)
-            # 2. Fallback to Local CPU (Reliable, but slow)
             try:
                 # feature_extraction returns a list of arrays
                 if hf_client:
+                    print(f"[DEBUG] Attempting HF API Embedding for batch {i//batch_size + 1}...")
                     api_embeddings = hf_client.feature_extraction(batch_chunks, model="sentence-transformers/all-MiniLM-L6-v2")
+                    
                     # Ensure it's a list of lists/arrays. API might return different formats.
                     if isinstance(api_embeddings, list) or (hasattr(api_embeddings, 'shape') and len(api_embeddings.shape) > 0):
                        batch_embeddings = api_embeddings
-                       print(f"[DEBUG] Used HF API for batch {i//batch_size + 1}")
+                       print(f"[SUCCESS] Used HF API for batch {i//batch_size + 1}")
                     else:
+                       print(f"[ERROR] Invalid API response format: {type(api_embeddings)}")
                        raise ValueError("Invalid API response format")
                 else:
+                    print("[WARNING] No HF Client available (Check HUGGINGFACE_API_KEY)")
                     raise ValueError("No HF Client available")
             except Exception as e:
                 print(f"[WARNING] HF API Embedding failed: {e}. Falling back to Local CPU.")
                 # Fallback to Local CPU
+                try:
+                    print(f"[INFO] Using Local CPU Embedding for batch {i//batch_size + 1}...")
                 try:
                     batch_embeddings = get_embedding_model().encode(batch_chunks)
                 except Exception as ex:
