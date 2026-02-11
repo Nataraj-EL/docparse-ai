@@ -172,24 +172,21 @@ def delete_document(filename: str, session_id: str) -> bool:
         print(f"[ERROR] delete_document failed: {e}")
         return False
 
-from huggingface_hub import InferenceClient
+from groq import Groq
 
 # Initialize the client at module level
 # CRITICAL FIX: Strip newline characters that might be present in the env var
-client = InferenceClient(token=os.getenv("HUGGINGFACE_API_KEY", "").strip())
+api_key = os.getenv("GROQ_API_KEY", "").strip()
+client = Groq(api_key=api_key) if api_key else None
 
-def query_huggingface(prompt: str, system_prompt: str = None) -> str:
+def query_groq(prompt: str, system_prompt: str = None) -> str:
     """
-    Query the Hugging Face API with the given prompt using the Llama 3 model via InferenceClient.
-    
-    Args:
-        prompt (str): The prompt to send to the model (user message)
-        system_prompt (str, optional): The system prompt to use. Defaults to a generic helpful assistant prompt.
-        
-    Returns:
-        str: The generated response from the model
+    Query the Groq API with the given prompt using the Llama 3 model.
     """
     try:
+        if not client:
+             return "Error: GROQ_API_KEY not found. Please set it in your environment."
+
         if system_prompt is None:
             system_prompt = ("You are a helpful research assistant. "
                            "Answer the question based on the provided context. "
@@ -202,25 +199,23 @@ def query_huggingface(prompt: str, system_prompt: str = None) -> str:
             {"role": "user", "content": prompt}
         ]
         
-        # Make the API request using InferenceClient
-        response = client.chat_completion(
+        # Make the API request using Groq
+        response = client.chat.completions.create(
             messages=messages,
-            model="meta-llama/Meta-Llama-3-8B-Instruct",
-            max_tokens=1024,
+            model="llama3-8b-8192",
             temperature=0.3,
+            max_tokens=1024,
             top_p=0.85,
-            frequency_penalty=1.1,
-            presence_penalty=1.0
+            stop=None,
+            stream=False
         )
         
         # Parse the response
-        if response.choices and len(response.choices) > 0:
-            return response.choices[0].message.content.strip()
-        return "Error: Empty response from model."
+        return response.choices[0].message.content.strip()
         
     except Exception as e:
-        print(f"Error querying Hugging Face API: {str(e)}")
-        return f"Error: Failed to get response from the AI model. {str(e)}"
+        print(f"Error querying Groq API: {str(e)}")
+        return f"Error: Failed to get response from Groq. {str(e)}"
 
 def ask_query(query: str, session_id: str) -> str:
     """
@@ -341,8 +336,8 @@ FORMATTING:
 Question: {query}
 {base_instruction}"""
 
-        # Get response from Hugging Face
-        response = query_huggingface(user_message, system_prompt=system_prompt)
+        # Get response from Groq
+        response = query_groq(user_message, system_prompt=system_prompt)
         
         # Post-process the response if needed
         if not response or response.strip() == "":
