@@ -216,3 +216,40 @@ async def test_groq():
             "error": str(e),
             "message": "Failed to connect to Groq API. Please check your API key."
         }
+@app.delete("/delete-document")
+async def delete_doc_endpoint(request: Request):
+    """Delete a specific document."""
+    try:
+        data = await request.json()
+        filename = data.get("filename")
+        session_id = request.headers.get("X-Session-ID")
+        
+        if not filename:
+            raise HTTPException(status_code=400, detail="Filename required")
+        if not session_id:
+             raise HTTPException(status_code=400, detail="Session ID required")
+            
+        success = delete_document(filename, session_id)
+        if success:
+            return {"status": "success", "message": f"Deleted {filename}"}
+        else:
+            return {"status": "error", "message": "File not found or could not be deleted"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/delete-all")
+async def delete_all_endpoint(request: Request):
+    """Delete all documents for the current session."""
+    try:
+        session_id = request.headers.get("X-Session-ID")
+        if not session_id:
+             raise HTTPException(status_code=400, detail="Session ID required")
+            
+        success = delete_all_documents(session_id)
+        if success:
+            return {"status": "success", "message": "All documents deleted"}
+        else:
+            # If false, it might mean empty library, which is fine
+            return {"status": "success", "message": "No documents to delete"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
