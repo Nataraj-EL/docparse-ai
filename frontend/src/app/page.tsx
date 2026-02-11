@@ -27,47 +27,69 @@ export default function Home() {
     scrollToBottom();
   }, [messages, loading]);
 
-  // Check backend health on component mount
+  // Check backend health
+  const checkBackendHealth = async () => {
+    try {
+      const response = await fetch(`${API_CONFIG.baseURL}/health`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store'
+      });
+      if (response.ok) {
+        setBackendStatus('online');
+      } else {
+        setBackendStatus('offline');
+      }
+    } catch (error) {
+      console.error('Failed to connect to backend:', error);
+      setBackendStatus('offline');
+    }
+  };
+
+  const fetchDocuments = async () => {
+    const sid = localStorage.getItem("docparse_session_id") || "";
+    try {
+      const response = await fetch(`${API_CONFIG.baseURL}/documents`, {
+        headers: {
+          'X-Session-ID': sid
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableDocuments(data.documents);
+      }
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
 
-    async function checkBackendHealth() {
-      try {
-        const response = await fetch(`${API_CONFIG.baseURL}/health`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          cache: 'no-store'
-        });
-
-        if (isMounted) {
-          if (response.ok) {
-            setBackendStatus('online');
-          } else {
-            console.warn('Backend is not responding as expected');
-            setBackendStatus('offline');
-          }
-        }
-      } catch (error) {
-        console.error('Failed to connect to backend:', error);
-        if (isMounted) {
-          setBackendStatus('offline');
-        }
-      }
+    // Generate or retrieve Session ID
+    let sid = localStorage.getItem("docparse_session_id");
+    if (!sid) {
+      sid = typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : Math.random().toString(36).substring(2) + Date.now().toString(36);
+      localStorage.setItem("docparse_session_id", sid);
     }
 
-    async function init() {
-      await checkBackendHealth();
-      if (isMounted) await fetchDocuments();
+    // Initial fetch
+    if (isMounted) {
+      checkBackendHealth();
+      fetchDocuments();
     }
-
-    init();
 
     // Cleanup function to prevent state updates after unmount
     return () => {
       isMounted = false;
     };
+  }, []);
+
+  const handleDeleteDocument = async (filename: string) => {
+    if (!confirm(`Are you sure you want to remove ${filename} from your library?`)) return;
+
     try {
       const sid = localStorage.getItem("docparse_session_id") || "";
       const response = await fetch(`${API_CONFIG.baseURL}/documents/${encodeURIComponent(filename)}`, {
@@ -111,15 +133,13 @@ export default function Home() {
         let errorMessage = 'Failed to upload files';
         try {
           const errorJson = JSON.parse(text);
-          console.error("Full Upload Error JSON:", errorJson); // Log full error for debugging
+          console.error("Full Upload Error JSON:", errorJson);
 
-          // Extract the most relevant error message
           const rawError = errorJson.detail || errorJson.message || errorJson.error;
 
           if (typeof rawError === 'string') {
             errorMessage = rawError;
           } else if (typeof rawError === 'object') {
-            // If it's an array or object, stringify it nicely
             errorMessage = JSON.stringify(rawError, null, 2);
           } else {
             errorMessage = JSON.stringify(errorJson);
@@ -133,11 +153,11 @@ export default function Home() {
       const result = await response.json();
       console.log(`Successfully uploaded ${filesToUpload.length} file(s)!`);
       alert(`✅ ${filesToUpload.length} File(s) successfully uploaded and processed!`);
-      fetchDocuments(); // Refresh list after upload
+      await fetchDocuments();
     } catch (error) {
       console.error('Upload error:', error);
       alert(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      setFiles([]); // Clear invalid selection
+      setFiles([]);
     } finally {
       setLoading(false);
     }
