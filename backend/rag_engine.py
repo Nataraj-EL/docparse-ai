@@ -78,22 +78,13 @@ def process_pdf(pdf_path: str, session_id: str) -> bool:
         for i in range(0, len(chunks), batch_size):
             batch_chunks = chunks[i:i + batch_size]
             
-            # HYBRID EMBEDDING STRATEGY:
-            # 1. Try Hugging Face API (Fast, runs on GPU, no CPU load)
-            # 2. Fallback to Local CPU (Reliable, but slow)
+            # EMBEDDING STRATEGY:
+            # Use Local CPU (Reliable, no API key needed for embeddings)
             try:
-                # feature_extraction returns a list of arrays
-                api_embeddings = client.feature_extraction(batch_chunks, model="sentence-transformers/all-MiniLM-L6-v2")
-                # Ensure it's a list of lists/arrays. API might return different formats.
-                # If valid, use it.
-                if isinstance(api_embeddings, list) or (hasattr(api_embeddings, 'shape') and len(api_embeddings.shape) > 0):
-                   batch_embeddings = api_embeddings
-                   print(f"[DEBUG] Used HF API for batch {i//batch_size + 1}")
-                else:
-                   raise ValueError("Invalid API response format")
+                batch_embeddings = get_embedding_model().encode(batch_chunks)
             except Exception as e:
-                print(f"[WARNING] HF API Embedding failed: {e}. Falling back to Local CPU.")
-            # Fallback to Local CPU
+                print(f"[ERROR] Local embedding failed: {e}")
+                raise e
             try:
                 batch_embeddings = get_embedding_model().encode(batch_chunks)
             except Exception as e:
