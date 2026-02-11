@@ -1,7 +1,7 @@
 from fastapi import FastAPI, UploadFile, Form, Request, HTTPException, status, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
-from rag_engine import process_pdf, ask_query, query_huggingface, list_documents, delete_document
+from rag_engine import process_pdf, ask_query, query_groq, list_documents, delete_document
 import os
 import time
 import json
@@ -14,8 +14,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Validate required environment variables
-if not os.getenv("HUGGINGFACE_API_KEY"):
-    raise ValueError("HUGGINGFACE_API_KEY environment variable is not set")
+if not os.getenv("GROQ_API_KEY"):
+    print("WARNING: GROQ_API_KEY environment variable is not set. AI features will fail.")
 
 app = FastAPI()
 
@@ -199,20 +199,20 @@ async def remove_document(filename: str, x_session_id: str = Header(...)):
             detail=f"Document {filename} not found or could not be deleted"
         )
 
-@app.get("/test-hf")
-async def test_huggingface():
-    """Test endpoint to verify Hugging Face API connectivity."""
+@app.get("/test-groq")
+async def test_groq():
+    """Test endpoint to verify Groq API connectivity."""
     test_prompt = "Hello, how are you?"
     try:
-        response = query_huggingface(test_prompt)
+        response = query_groq(test_prompt)
         return {
             "status": "success",
             "response": response,
-            "model": "meta-llama/Meta-Llama-3-8B-Instruct"
+            "model": "llama3-8b-8192"
         }
     except Exception as e:
         return {
             "status": "error",
             "error": str(e),
-            "message": "Failed to connect to Hugging Face API. Please check your API key and internet connection."
+            "message": "Failed to connect to Groq API. Please check your API key."
         }
