@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, Form, Request, HTTPException, status
+from fastapi import FastAPI, UploadFile, Form, Request, HTTPException, status, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from rag_engine import process_pdf, ask_query, query_huggingface, list_documents, delete_document
@@ -113,8 +113,8 @@ from typing import Dict, Any, Optional, List
 # ... (existing code)
 
 @app.post("/upload")
-async def upload_pdf(files: List[UploadFile]):
-    """Handle multiple PDF file uploads for processing."""
+async def upload_pdf(files: List[UploadFile], x_session_id: str = Header(...)):
+    """Handle multiple PDF file uploads for processing with session isolation."""
     # Create temp directory if it doesn't exist
     temp_dir = Path("temp")
     temp_dir.mkdir(exist_ok=True)
@@ -136,7 +136,7 @@ async def upload_pdf(files: List[UploadFile]):
             
             # Process the PDF - pass original filename for display if needed
             # For now, process_pdf uses the filename from the path
-            success = process_pdf(str(file_path))
+            success = process_pdf(str(file_path), x_session_id)
             if success:
                 results.append({"filename": file.filename, "status": "success"})
             else:
@@ -160,8 +160,8 @@ async def upload_pdf(files: List[UploadFile]):
 
 
 @app.post("/ask")
-async def ask_question(query: str = Form(...)):
-    """Handle question-answering using the RAG system."""
+async def ask_question(query: str = Form(...), x_session_id: str = Header(...)):
+    """Handle question-answering using the RAG system with session isolation."""
     if not query or not query.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -169,7 +169,7 @@ async def ask_question(query: str = Form(...)):
         )
     
     try:
-        answer = ask_query(query)
+        answer = ask_query(query, x_session_id)
         return {
             "answer": answer,
             "status": "success",
@@ -183,14 +183,14 @@ async def ask_question(query: str = Form(...)):
         )
 
 @app.get("/documents")
-async def get_documents():
-    """List all unique documents in the knowledge base."""
-    return {"documents": list_documents()}
+async def get_documents(x_session_id: str = Header(...)):
+    """List all unique documents in the knowledge base for the session."""
+    return {"documents": list_documents(x_session_id)}
 
 @app.delete("/documents/{filename}")
-async def remove_document(filename: str):
-    """Delete a document and its chunks from the knowledge base."""
-    success = delete_document(filename)
+async def remove_document(filename: str, x_session_id: str = Header(...)):
+    """Delete a document and its chunks from the knowledge base for the session."""
+    success = delete_document(filename, x_session_id)
     if success:
         return {"message": f"Successfully deleted {filename}"}
     else:

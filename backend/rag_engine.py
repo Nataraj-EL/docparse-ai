@@ -12,15 +12,15 @@ embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 chroma_client = PersistentClient(path="chroma_db")
 collection = chroma_client.get_or_create_collection("pdf_collection")
 
-def process_pdf(pdf_path: str) -> bool:
-    """Process a PDF file and store its chunks in ChromaDB."""
+def process_pdf(pdf_path: str, session_id: str) -> bool:
+    """Process a PDF file and store its chunks in ChromaDB with session isolation."""
     filename = os.path.basename(pdf_path)
     try:
         # Use a localized print or a safe approach for Tamil filenames
         try:
-            print(f"[DEBUG] Processing PDF: {filename}")
+            print(f"[DEBUG] Processing PDF: {filename} for Session: {session_id}")
         except UnicodeEncodeError:
-            print(f"[DEBUG] Processing PDF: (Contains non-ASCII characters)")
+            print(f"[DEBUG] Processing PDF: (Contains non-ASCII characters) for Session: {session_id}")
 
         text = ""
         # Use PyMuPDF (fitz) for much more robust extraction
@@ -83,10 +83,14 @@ def process_pdf(pdf_path: str) -> bool:
             base_id = f"{filename}_{os.path.getmtime(pdf_path)}"
             batch_ids = [f"{base_id}_chunk_{i+j}" for j in range(len(batch_chunks))]
             
+            # Add session_id to metadata for EVERY chunk
+            batch_metadatas = [{"session_id": session_id, "source": filename} for _ in batch_chunks]
+            
             collection.add(
                 documents=batch_chunks, 
                 embeddings=[emb.tolist() if hasattr(emb, 'tolist') else emb for emb in batch_embeddings],
-                ids=batch_ids
+                ids=batch_ids,
+                metadatas=batch_metadatas
             )
             print(f"[DEBUG] Processed batch {i//batch_size + 1}/{(len(chunks)-1)//batch_size + 1}")
         
@@ -99,12 +103,14 @@ def process_pdf(pdf_path: str) -> bool:
         traceback.print_exc()
         raise e
 
-def list_documents() -> List[Dict[str, Any]]:
-    """List all unique documents stored in ChromaDB."""
+def list_documents(session_id: str) -> List[Dict[str, Any]]:
+    """List all unique documents stored in ChromaDB for a specific session."""
     try:
-        # Get all IDs and metadatas
-        # ChromaDB query with no filter returns everything if parameters are set right
-        results = collection.get(include=["metadatas"])
+        # Get all IDs and metadatas, filtered by session_id
+        results = collection.get(
+            where={"session_id": session_id},
+            include=["metadatas"]
+        )
         
         if not results or not results["ids"]:
             return []
@@ -124,11 +130,13 @@ def list_documents() -> List[Dict[str, Any]]:
         print(f"[ERROR] list_documents failed: {e}")
         return []
 
-def delete_document(filename: str) -> bool:
-    """Delete all chunks associated with a specific filename."""
+def delete_document(filename: str, session_id: str) -> bool:
+    """Delete all chunks associated with a specific filename and session."""
     try:
-        # Get all IDs to find matches
-        results = collection.get()
+        # Get all IDs to find matches ensuring they belong to the session
+        results = collection.get(
+            where={"session_id": session_id}
+        )
         if not results or not results["ids"]:
             return False
             
@@ -193,12 +201,13 @@ def query_huggingface(prompt: str, system_prompt: str = None) -> str:
         print(f"Error querying Hugging Face API: {str(e)}")
         return f"Error: Failed to get response from the AI model. {str(e)}"
 
-def ask_query(query: str) -> str:
+def ask_query(query: str, session_id: str) -> str:
     """
-    Process a query using RAG with Hugging Face's Llama 3 model.
+    Process a query using RAG with Hugging Face's Llama 3 model, isolated to session.
     
     Args:
         query (str): The user's question
+        session_id (str): The session ID to restrict context to
         
     Returns:
         str: The generated answer with context from the knowledge base
@@ -207,10 +216,11 @@ def ask_query(query: str) -> str:
         # Encode the query to get embeddings
         query_embedding = embedding_model.encode([query])[0]
         
-        # Query ChromaDB for relevant context
+        # Query ChromaDB for relevant context, filtered by session_id
         results = collection.query(
             query_embeddings=[query_embedding.tolist()],
             n_results=5,
+            where={"session_id": session_id},
             include=["documents", "distances", "metadatas"]
         )
         
