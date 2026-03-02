@@ -11,7 +11,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "DocuMind AI | Academic Intelligence",
+  title: "DocParse AI | Academic Intelligence",
   description: "A premium RAG powered research and study assistant.",
 };
 
