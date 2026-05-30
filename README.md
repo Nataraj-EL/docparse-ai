@@ -50,7 +50,7 @@ graph TD
     Engine -->|Primary: Embeddings Request| HF
     Engine -->|Fallback: Local CPU Embeddings| LocalModel
     Engine -->|Vector Persist & Retrieval| Chroma
-    Engine -->|LLM Synthesis Request (llama-3.3-70b-versatile)| Groq
+    Engine -->|LLM Synthesis Request - llama-3.3-70b-versatile| Groq
 ```
 
 ---
