@@ -250,10 +250,12 @@ export default function Home() {
               <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Library</h2>
               <button
                 onClick={() => setIsSidebarOpen(false)}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors flex items-center justify-center text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                 aria-label="Close Sidebar"
               >
-                <div className="text-slate-500">✕</div>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
 
@@ -272,15 +274,19 @@ export default function Home() {
                         className="group flex items-center justify-between p-3 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500 transition-all hover:shadow-md"
                       >
                         <div className="flex items-center gap-3 overflow-hidden">
-                          <span className="text-xl">📄</span>
+                          <svg className="w-4 h-4 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
                           <span className="text-xs font-semibold truncate max-w-[140px] font-sans">{doc.filename}</span>
                         </div>
                         <button
                           onClick={() => handleDeleteDocument(doc.filename)}
-                          className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded-lg transition-all"
+                          className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded-lg transition-all flex items-center justify-center"
                           title="Remove from library"
                         >
-                          ✕
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
                         </button>
                       </div>
                     ))}
@@ -294,7 +300,10 @@ export default function Home() {
                 htmlFor="file-upload"
                 className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 cursor-pointer transition-all shadow-lg shadow-blue-500/20 active:scale-95"
               >
-                <span>➕</span> Add New Knowledge
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                </svg>
+                Add New Knowledge
               </label>
             </div>
           </div>
@@ -308,9 +317,12 @@ export default function Home() {
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                  className="p-3 bg-white/80 dark:bg-slate-800/80 rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 hover:scale-105 active:scale-95 transition-all text-xl"
+                  className="p-3 bg-white/80 dark:bg-slate-800/80 rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 hover:scale-105 active:scale-95 transition-all flex items-center justify-center"
+                  aria-label="Toggle Sidebar"
                 >
-                  ☰
+                  <svg className="w-5 h-5 text-slate-700 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
                 </button>
                 <div className="min-w-0 flex-1 pr-4 cursor-default">
                   <h1 className="text-xl md:text-2xl font-black italic uppercase tracking-normal bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 bg-clip-text text-transparent truncate pr-2">DocParse AI</h1>
@@ -324,19 +336,29 @@ export default function Home() {
                 {/* Upload Button */}
                 <button
                   onClick={() => document.getElementById('file-upload')?.click()}
-                  className="p-3 bg-white/80 dark:bg-slate-800/80 rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 hover:scale-105 active:scale-95 transition-all text-xl"
+                  className="p-3 bg-white/80 dark:bg-slate-800/80 rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 hover:scale-105 active:scale-95 transition-all flex items-center justify-center"
                   title="Upload PDF"
                 >
-                  ➕
+                  <svg className="w-5 h-5 text-slate-700 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                  </svg>
                 </button>
 
                 {/* Theme Toggle Button */}
                 <button
                   onClick={() => setDarkMode(!darkMode)}
-                  className="p-3 bg-white/80 dark:bg-slate-800/80 rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 hover:scale-105 active:scale-95 transition-all text-xl"
+                  className="p-3 bg-white/80 dark:bg-slate-800/80 rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 hover:scale-105 active:scale-95 transition-all flex items-center justify-center"
                   title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
                 >
-                  {darkMode ? '☀️' : '🌙'}
+                  {darkMode ? (
+                    <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                  )}
                 </button>
               </div>
             </div>
@@ -354,7 +376,9 @@ export default function Home() {
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-8">
                 <div className="w-24 h-24 mb-6 bg-blue-500/10 dark:bg-blue-500/5 rounded-3xl flex items-center justify-center border border-blue-500/20">
-                  <span className="text-4xl">🎓</span>
+                  <svg className="w-10 h-10 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
                 </div>
                 <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">Universal Document Intelligence</h2>
                 <p className="text-sm md:text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed px-4">
@@ -364,7 +388,10 @@ export default function Home() {
                   htmlFor="file-upload"
                   className="mt-8 px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center gap-3 cursor-pointer transition-all shadow-xl shadow-blue-500/20 active:scale-95"
                 >
-                  <span>📄</span> Upload PDF Documents
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  Upload PDF Documents
                 </label>
               </div>
             ) : (
@@ -407,7 +434,10 @@ export default function Home() {
                                       if (part.startsWith("[Source:")) {
                                         return (
                                           <span key={i} className="inline-flex items-center gap-1 px-1.5 py-0.5 mx-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-[10px] font-bold rounded border border-blue-200 dark:border-blue-800 transition-all hover:scale-105">
-                                            📑 {part.replace("[Source: ", "").replace("]", "")}
+                                            <svg className="w-3 h-3 text-blue-700 dark:text-blue-300 mr-0.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                            {part.replace("[Source: ", "").replace("]", "")}
                                           </span>
                                         );
                                       }
