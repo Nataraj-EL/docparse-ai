@@ -12,7 +12,7 @@ export default function Home() {
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
-  const [darkMode, setDarkMode] = useState(true); // Default to Dark Mode for "Premium" feel
+  const [darkMode, setDarkMode] = useState(false); // Default to Light Mode
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [availableDocuments, setAvailableDocuments] = useState<{ filename: string }[]>([]);
 
@@ -355,7 +355,7 @@ export default function Home() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
                     </svg>
                   ) : (
-                    <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                     </svg>
                   )}
@@ -489,7 +489,7 @@ export default function Home() {
                     <button
                       type="submit"
                       disabled={!input.trim() || loading}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-3 md:p-4 aspect-square bg-primary hover:bg-primary/90 disabled:bg-muted text-primary-foreground rounded-full transition-all hover:scale-105 active:scale-95 flex items-center justify-center group"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-3 md:p-4 aspect-square bg-primary hover:bg-primary/90 disabled:opacity-45 disabled:pointer-events-none text-primary-foreground rounded-full transition-all hover:scale-105 active:scale-95 flex items-center justify-center group"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 md:h-6 md:w-6 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
