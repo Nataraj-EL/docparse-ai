@@ -323,8 +323,8 @@ export default function Home() {
                   </svg>
                 </button>
                 <div className="min-w-0 flex-1 pr-4 cursor-default">
-                  <h1 className="text-lg md:text-xl font-medium tracking-[0.2em] uppercase text-primary font-sans truncate pr-2">
-                    DocParse <span className="font-normal text-muted-foreground">AI</span>
+                  <h1 className="text-xl md:text-2xl font-normal tracking-tight text-primary font-serif truncate pr-2">
+                    DocParse <span className="font-light text-muted-foreground">AI</span>
                   </h1>
                   <div className="flex items-center gap-2">
                     <span className={`h-1.5 w-1.5 rounded-full animate-pulse ${backendStatus === 'online' ? 'bg-primary' : 'bg-destructive'}`}></span>
